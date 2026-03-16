@@ -62,7 +62,7 @@
 |------|------|
 | フレームワーク | Next.js 16 (App Router) |
 | UI | React 19 + TailwindCSS 4 + shadcn/ui |
-| 認証 | NextAuth.js (Credentials Provider) |
+| 認証 | Supabase Auth（cost-app, shipping-managerと統一） |
 | DB | Supabase (PostgreSQL) |
 | 画像保存 | Supabase Storage |
 | アーキテクチャ | ヘキサゴナルアーキテクチャ |

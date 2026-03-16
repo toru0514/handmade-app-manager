@@ -6,7 +6,7 @@
 
 | アプリ | 概要 | リポジトリ | ステータス |
 |-------|------|-----------|-----------|
-| **cost-app** | 原価計算・在庫管理 | [toru0514/cost-app](https://github.com/toru0514/cost-app) | 運用中 |
+| **cost-app** | 原価計算・在庫管理・コストシミュレーション | [toru0514/cost-app](https://github.com/toru0514/cost-app) | 運用中 |
 | **handmade-shipping-manager** | 注文取得・伝票作成 | [toru0514/handmade-shipping-manager](https://github.com/toru0514/handmade-shipping-manager) | 運用中 |
 | **pfauto-app** | PF自動出品 | [toru0514/pfauto-app](https://github.com/toru0514/pfauto-app) | 運用中 |
 | **領収書整理アプリ** | 経費記録・確定申告準備 | 未作成 | 計画中 |
@@ -27,7 +27,7 @@
 
 | アプリ | データストア |
 |-------|------------|
-| cost-app | localStorage |
+| cost-app | Supabase (PostgreSQL) + localStorage (ゲスト) + Google Sheets |
 | shipping-manager | Supabase (PostgreSQL) + Google Sheets |
 | pfauto-app | Google Sheets |
 | 領収書アプリ（予定） | Supabase (PostgreSQL) |

@@ -10,7 +10,7 @@
 |---------|------|-----------|---------|
 | 材料仕入れ | △ 部分対応 | cost-app | 材料費の記録（仕入先管理は未対応） |
 | 制作 | × 未対応 | - | 作業時間の記録、進捗管理が必要 |
-| 原価計算 | ◎ 対応済み | cost-app | 材料費・光熱費・人件費から原価を算出 |
+| 原価計算 | ◎ 対応済み | cost-app | 9種類のコストカテゴリ（材料/梱包/人件費/外注/開発/設備/物流/電気/手数料）で原価算出。シミュレーション機能付き |
 | 在庫管理 | ◎ 対応済み | cost-app | 商品別の在庫数管理 |
 | 出品 | ◎ 対応済み | pfauto-app | minne/Creema/BASE/iichiへの自動出品 |
 | 受注 | ◎ 対応済み | shipping-manager | Gmail/Playwright で注文を自動取得 |
@@ -33,18 +33,28 @@
   - Vercel (デプロイ)
 
 データストア:
-  - cost-app:              localStorage（ブラウザ内完結）
+  - cost-app:              Supabase (PostgreSQL) + localStorage (ゲスト) + Google Sheets
   - shipping-manager:      Supabase (PostgreSQL) + Google Sheets
   - pfauto-app:            Google Sheets（マスターデータ）
   - 領収書アプリ（予定）:   Supabase (PostgreSQL)
 
 外部連携:
-  - Google Sheets API      (shipping-manager, pfauto-app)
+  - Google Sheets API      (全3アプリ)
   - Gmail API              (shipping-manager, pfauto-app)
   - Playwright             (shipping-manager, pfauto-app)
-  - Slack Webhook          (shipping-manager, pfauto-app)
+  - Slack Webhook          (全3アプリ)
   - Click Post API         (shipping-manager)
   - ヤマトPUDO             (shipping-manager)
+  - Resend (メール送信)    (cost-app - チーム招待)
+  - microCMS               (cost-app - 画像ホスティング)
+
+既存のパッケージ化基盤（cost-appに実装済み）:
+  - チーム機能（オーナー/管理者/メンバー/ビューアー）
+  - RLS (Row Level Security) によるユーザー/チーム単位のデータ分離
+  - 監査ログ（データ変更の記録・エクスポート）
+  - Excel/PDF/CSVエクスポート（ExcelJS, jsPDF）
+  - 9種類のコストカテゴリによる詳細な原価計算
+  - コストシミュレーション（変動、目標利益率、設備投資）
 ```
 
 ## アプリ間データフロー
@@ -180,12 +190,16 @@
 
 ## パッケージ化に向けた共通基盤
 
-将来のパッケージ化に備え、以下の共通モジュールを段階的に整理する：
+将来のパッケージ化に備え、以下の共通モジュールを段階的に整理する。
+**注**: cost-appにはチーム機能・RLS・監査ログが既に実装されており、これをベースに他アプリへ展開する方針が効率的。
 
-| モジュール | 概要 | 対象アプリ |
-|-----------|------|-----------|
-| 共通UIコンポーネント | shadcn/uiベースの共通テーマ・コンポーネント | 全アプリ |
-| 認証基盤 | 共通ログイン・ユーザー管理 | 全アプリ |
-| 通知基盤 | Slack・メール通知の統一インターフェース | 全アプリ |
-| Google Sheets連携 | 共通のSpreadsheet読み書きユーティリティ | pfauto-app, shipping-manager |
-| Playwright基盤 | ブラウザ自動化の共通フレームワーク | pfauto-app, shipping-manager |
+| モジュール | 概要 | 対象アプリ | 備考 |
+|-----------|------|-----------|------|
+| 共通UIコンポーネント | shadcn/uiベースの共通テーマ・コンポーネント | 全アプリ | |
+| 認証基盤 | Supabase Auth（共通ログイン・ユーザー管理） | 全アプリ | cost-app, shipping-managerで実装済み |
+| チーム・マルチテナント | ロール管理、RLS、データ分離 | 全アプリ | **cost-appに実装済み** → 他アプリへ展開 |
+| 監査ログ | データ変更の記録・エクスポート | 全アプリ | **cost-appに実装済み** → 他アプリへ展開 |
+| 通知基盤 | Slack・メール通知の統一インターフェース | 全アプリ | 全アプリで個別実装済み → 共通化 |
+| Google Sheets連携 | 共通のSpreadsheet読み書きユーティリティ | 全3アプリ | 全アプリで個別実装済み → 共通化 |
+| Playwright基盤 | ブラウザ自動化の共通フレームワーク | pfauto-app, shipping-manager | |
+| エクスポート基盤 | Excel/PDF/CSV出力の共通ユーティリティ | 全アプリ | **cost-appにExcelJS/jsPDF実装済み** |
