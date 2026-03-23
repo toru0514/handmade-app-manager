@@ -27,13 +27,13 @@ import LinkCard from "./LinkCard";
 import AddLinkDialog from "./AddLinkDialog";
 
 export default function LinkList() {
-  const { links, isLoaded, addLink, updateLink, deleteLink } = useLinks();
+  const { links, isLoaded, error, addLink, updateLink, deleteLink } = useLinks();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<string | null>(null);
 
-  const handleAdd = (title: string, url: string, description?: string) => {
-    addLink(title, url, description);
+  const handleAdd = async (title: string, url: string, description?: string) => {
+    await addLink(title, url, description);
     setSnackbar("リンクを追加しました");
   };
 
@@ -41,9 +41,9 @@ export default function LinkList() {
     setDeleteTarget(id);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteTarget) {
-      deleteLink(deleteTarget);
+      await deleteLink(deleteTarget);
       setDeleteTarget(null);
       setSnackbar("リンクを削除しました");
     }
@@ -84,7 +84,13 @@ export default function LinkList() {
           アプリやツールのリンクを一元管理できます
         </Typography>
 
-        {links.length === 0 ? (
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {links.length === 0 && !error ? (
           <Alert severity="info" sx={{ mt: 2 }}>
             リンクがまだありません。右下の「+」ボタンから追加してください。
           </Alert>

@@ -27,7 +27,7 @@ interface LinkCardProps {
   link: LinkItem;
   onUpdate: (
     id: string,
-    updates: Partial<Omit<LinkItem, "id" | "createdAt">>
+    updates: Partial<Omit<LinkItem, "id" | "created_at">>
   ) => void;
   onDelete: (id: string) => void;
 }

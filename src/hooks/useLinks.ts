@@ -1,95 +1,92 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { LinkItem } from "@/types/link";
-
-const STORAGE_KEY = "handmade-app-manager-links";
-
-const DEFAULT_LINKS: LinkItem[] = [
-  {
-    id: uuidv4(),
-    title: "原価計算アプリ (cost-app)",
-    url: "https://cost-app.vercel.app",
-    description: "原価計算・在庫管理・コストシミュレーション",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: uuidv4(),
-    title: "発送管理 (shipping-manager)",
-    url: "https://handmade-shipping-manager.vercel.app",
-    description: "注文取得・伝票作成",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: uuidv4(),
-    title: "PF自動出品 (pfauto-app)",
-    url: "https://pfauto-app.vercel.app",
-    description: "プラットフォーム自動出品",
-    createdAt: new Date().toISOString(),
-  },
-];
 
 export function useLinks() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLinks = useCallback(async () => {
+    try {
+      const res = await fetch("/api/links");
+      if (!res.ok) throw new Error("Failed to fetch links");
+      const data = await res.json();
+      setLinks(data);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "エラーが発生しました");
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setLinks(JSON.parse(stored));
-    } else {
-      setLinks(DEFAULT_LINKS);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_LINKS));
-    }
-    setIsLoaded(true);
-  }, []);
-
-  const saveLinks = useCallback((newLinks: LinkItem[]) => {
-    setLinks(newLinks);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newLinks));
-  }, []);
+    fetchLinks();
+  }, [fetchLinks]);
 
   const addLink = useCallback(
-    (title: string, url: string, description?: string) => {
-      const newLink: LinkItem = {
-        id: uuidv4(),
-        title,
-        url,
-        description,
-        createdAt: new Date().toISOString(),
-      };
-      saveLinks([...links, newLink]);
+    async (title: string, url: string, description?: string) => {
+      try {
+        const res = await fetch("/api/links", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, url, description }),
+        });
+        if (!res.ok) throw new Error("Failed to add link");
+        const newLink = await res.json();
+        setLinks((prev) => [...prev, newLink]);
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "追加に失敗しました");
+      }
     },
-    [links, saveLinks]
+    []
   );
 
   const updateLink = useCallback(
-    (id: string, updates: Partial<Omit<LinkItem, "id" | "createdAt">>) => {
-      const newLinks = links.map((link) =>
-        link.id === id ? { ...link, ...updates } : link
-      );
-      saveLinks(newLinks);
+    async (
+      id: string,
+      updates: Partial<Omit<LinkItem, "id" | "created_at">>
+    ) => {
+      // Find current link to merge with updates
+      const current = links.find((l) => l.id === id);
+      if (!current) return;
+
+      const payload = {
+        title: updates.title ?? current.title,
+        url: updates.url ?? current.url,
+        description: updates.description ?? current.description,
+      };
+
+      try {
+        const res = await fetch(`/api/links/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Failed to update link");
+        const updated = await res.json();
+        setLinks((prev) => prev.map((l) => (l.id === id ? updated : l)));
+        setError(null);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "更新に失敗しました");
+      }
     },
-    [links, saveLinks]
+    [links]
   );
 
-  const deleteLink = useCallback(
-    (id: string) => {
-      saveLinks(links.filter((link) => link.id !== id));
-    },
-    [links, saveLinks]
-  );
+  const deleteLink = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/links/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete link");
+      setLinks((prev) => prev.filter((l) => l.id !== id));
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "削除に失敗しました");
+    }
+  }, []);
 
-  const reorderLinks = useCallback(
-    (fromIndex: number, toIndex: number) => {
-      const newLinks = [...links];
-      const [moved] = newLinks.splice(fromIndex, 1);
-      newLinks.splice(toIndex, 0, moved);
-      saveLinks(newLinks);
-    },
-    [links, saveLinks]
-  );
-
-  return { links, isLoaded, addLink, updateLink, deleteLink, reorderLinks };
+  return { links, isLoaded, error, addLink, updateLink, deleteLink };
 }
