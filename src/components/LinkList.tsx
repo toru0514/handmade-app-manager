@@ -22,13 +22,16 @@ import {
   Add as AddIcon,
   Dashboard as DashboardIcon,
   BarChart as BarChartIcon,
+  Logout as LogoutIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLinks } from "@/hooks/useLinks";
 import LinkCard from "./LinkCard";
 import AddLinkDialog from "./AddLinkDialog";
 
 export default function LinkList() {
+  const router = useRouter();
   const { links, isLoaded, error, addLink, updateLink, deleteLink } = useLinks();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -81,6 +84,16 @@ export default function LinkList() {
             startIcon={<BarChartIcon />}
           >
             売上集計
+          </Button>
+          <Button
+            color="inherit"
+            startIcon={<LogoutIcon />}
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              router.push("/login");
+            }}
+          >
+            ログアウト
           </Button>
         </Toolbar>
       </AppBar>

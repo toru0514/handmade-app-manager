@@ -1,10 +1,10 @@
-import { getSupabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = getSupabase();
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("links")
     .select("*")
@@ -18,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = getSupabase();
+  const supabase = await createSupabaseServerClient();
   const body = await request.json();
   const { title, url, description } = body;
 

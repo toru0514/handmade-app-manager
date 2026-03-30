@@ -1,4 +1,4 @@
-import { getSupabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -7,7 +7,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = getSupabase();
+  const supabase = await createSupabaseServerClient();
   const { id } = await params;
   const body = await request.json();
   const { title, url, description } = body;
@@ -37,7 +37,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = getSupabase();
+  const supabase = await createSupabaseServerClient();
   const { id } = await params;
 
   const { error } = await supabase.from("links").delete().eq("id", id);

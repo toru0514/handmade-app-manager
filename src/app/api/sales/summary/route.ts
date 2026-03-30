@@ -1,4 +1,4 @@
-import { getSupabase } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 import type {
   PlatformValue,
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
     const platform: PlatformValue | "all" = platformParam as PlatformValue | "all";
 
-    const supabase = getSupabase();
+    const supabase = await createSupabaseServerClient();
 
     // DB側でフィルタリング
     let query = supabase

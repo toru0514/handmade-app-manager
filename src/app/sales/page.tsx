@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AppBar,
   Toolbar,
@@ -9,12 +10,14 @@ import {
   Container,
   Box,
   Alert,
+  Button,
   CircularProgress,
   IconButton,
 } from "@mui/material";
 import {
   BarChart as BarChartIcon,
   ArrowBack as ArrowBackIcon,
+  Logout as LogoutIcon,
 } from "@mui/icons-material";
 import type { SalesSummaryDto } from "@/types/sales";
 import { SalesFilterForm } from "@/components/sales/SalesFilterForm";
@@ -38,6 +41,7 @@ function getDefaultEndDate(): string {
 }
 
 export default function SalesPage() {
+  const router = useRouter();
   const [summary, setSummary] = useState<SalesSummaryDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,9 +120,19 @@ export default function SalesPage() {
             <ArrowBackIcon />
           </IconButton>
           <BarChartIcon sx={{ mr: 1.5 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
             売上集計
           </Typography>
+          <Button
+            color="inherit"
+            startIcon={<LogoutIcon />}
+            onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              router.push("/login");
+            }}
+          >
+            ログアウト
+          </Button>
         </Toolbar>
       </AppBar>
 
