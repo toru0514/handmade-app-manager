@@ -21,7 +21,9 @@ import {
 import {
   Add as AddIcon,
   Dashboard as DashboardIcon,
+  BarChart as BarChartIcon,
 } from "@mui/icons-material";
+import Link from "next/link";
 import { useLinks } from "@/hooks/useLinks";
 import LinkCard from "./LinkCard";
 import AddLinkDialog from "./AddLinkDialog";
@@ -69,9 +71,17 @@ export default function LinkList() {
       <AppBar position="static" elevation={0}>
         <Toolbar>
           <DashboardIcon sx={{ mr: 1.5 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
             App Manager
           </Typography>
+          <Button
+            color="inherit"
+            component={Link}
+            href="/sales"
+            startIcon={<BarChartIcon />}
+          >
+            売上集計
+          </Button>
         </Toolbar>
       </AppBar>
 
