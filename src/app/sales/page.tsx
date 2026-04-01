@@ -1,24 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  AppBar,
-  Toolbar,
   Typography,
   Container,
   Box,
   Alert,
-  Button,
   CircularProgress,
-  IconButton,
 } from "@mui/material";
-import {
-  BarChart as BarChartIcon,
-  ArrowBack as ArrowBackIcon,
-  Logout as LogoutIcon,
-} from "@mui/icons-material";
 import type { SalesSummaryDto } from "@/types/sales";
 import { SalesFilterForm } from "@/components/sales/SalesFilterForm";
 import { SalesSummaryCard } from "@/components/sales/SalesSummaryCard";
@@ -26,6 +15,7 @@ import { SalesMonthlyChart } from "@/components/sales/SalesMonthlyChart";
 import { SalesPlatformBreakdown } from "@/components/sales/SalesPlatformBreakdown";
 import { SalesProductBreakdown } from "@/components/sales/SalesProductBreakdown";
 import { SalesTable } from "@/components/sales/SalesTable";
+import AppLayout from "@/components/AppLayout";
 
 function getDefaultStartDate(): string {
   const now = new Date();
@@ -41,7 +31,6 @@ function getDefaultEndDate(): string {
 }
 
 export default function SalesPage() {
-  const router = useRouter();
   const [summary, setSummary] = useState<SalesSummaryDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,34 +97,7 @@ export default function SalesPage() {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <AppBar position="static" elevation={0}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            component={Link}
-            href="/"
-            sx={{ mr: 1 }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <BarChartIcon sx={{ mr: 1.5 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
-            売上集計
-          </Typography>
-          <Button
-            color="inherit"
-            startIcon={<LogoutIcon />}
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              router.push("/login");
-            }}
-          >
-            ログアウト
-          </Button>
-        </Toolbar>
-      </AppBar>
-
+    <AppLayout>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ mb: 3 }}>
           <SalesFilterForm
@@ -199,6 +161,6 @@ export default function SalesPage() {
           </>
         )}
       </Container>
-    </Box>
+    </AppLayout>
   );
 }
