@@ -14,6 +14,7 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
+  Tooltip,
   Typography,
   Divider,
   useMediaQuery,
@@ -21,12 +22,14 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
   Dashboard as DashboardIcon,
   BarChart as BarChartIcon,
   Logout as LogoutIcon,
 } from "@mui/icons-material";
 
-const DRAWER_WIDTH = 240;
+const DRAWER_WIDTH_OPEN = 240;
+const DRAWER_WIDTH_CLOSED = 64;
 
 const navItems = [
   { label: "リンク管理", href: "/", icon: <DashboardIcon /> },
@@ -37,60 +40,87 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
+
+  const drawerWidth = desktopOpen ? DRAWER_WIDTH_OPEN : DRAWER_WIDTH_CLOSED;
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
 
-  const drawerContent = (
+  const drawerContent = (collapsed: boolean) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Toolbar>
-        <DashboardIcon sx={{ mr: 1.5, color: "primary.main" }} />
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
-          App Manager
-        </Typography>
+      <Toolbar sx={{ justifyContent: collapsed ? "center" : "flex-start", px: collapsed ? 0 : 2 }}>
+        {collapsed ? (
+          <IconButton onClick={() => setDesktopOpen(true)} size="small">
+            <MenuIcon />
+          </IconButton>
+        ) : (
+          <>
+            <DashboardIcon sx={{ mr: 1.5, color: "primary.main" }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
+              App Manager
+            </Typography>
+            <IconButton onClick={() => setDesktopOpen(false)} size="small">
+              <ChevronLeftIcon />
+            </IconButton>
+          </>
+        )}
       </Toolbar>
       <Divider />
       <List sx={{ flexGrow: 1, pt: 1 }}>
         {navItems.map((item) => (
           <ListItem key={item.href} disablePadding>
-            <ListItemButton
-              component={Link}
-              href={item.href}
-              selected={pathname === item.href}
-              onClick={() => isMobile && setMobileOpen(false)}
-              sx={{
-                mx: 1,
-                borderRadius: 1,
-                "&.Mui-selected": {
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                  "&:hover": { bgcolor: "primary.dark" },
-                  "& .MuiListItemIcon-root": { color: "primary.contrastText" },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
+            <Tooltip title={collapsed ? item.label : ""} placement="right">
+              <ListItemButton
+                component={Link}
+                href={item.href}
+                selected={pathname === item.href}
+                onClick={() => isMobile && setMobileOpen(false)}
+                sx={{
+                  mx: collapsed ? 0.5 : 1,
+                  borderRadius: 1,
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  px: collapsed ? 1.5 : 2,
+                  "&.Mui-selected": {
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                    "&:hover": { bgcolor: "primary.dark" },
+                    "& .MuiListItemIcon-root": { color: "primary.contrastText" },
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: "center" }}>
+                  {item.icon}
+                </ListItemIcon>
+                {!collapsed && <ListItemText primary={item.label} />}
+              </ListItemButton>
+            </Tooltip>
           </ListItem>
         ))}
       </List>
       <Divider />
       <List>
         <ListItem disablePadding>
-          <ListItemButton
-            onClick={handleLogout}
-            sx={{ mx: 1, borderRadius: 1 }}
-          >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary="ログアウト" />
-          </ListItemButton>
+          <Tooltip title={collapsed ? "ログアウト" : ""} placement="right">
+            <ListItemButton
+              onClick={handleLogout}
+              sx={{
+                mx: collapsed ? 0.5 : 1,
+                borderRadius: 1,
+                justifyContent: collapsed ? "center" : "flex-start",
+                px: collapsed ? 1.5 : 2,
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: "center" }}>
+                <LogoutIcon />
+              </ListItemIcon>
+              {!collapsed && <ListItemText primary="ログアウト" />}
+            </ListItemButton>
+          </Tooltip>
         </ListItem>
       </List>
     </Box>
@@ -125,7 +155,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <Box
         component="nav"
-        sx={{ width: { md: DRAWER_WIDTH }, flexShrink: { md: 0 } }}
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 }, transition: "width 225ms" }}
       >
         {isMobile ? (
           <Drawer
@@ -136,11 +166,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             sx={{
               "& .MuiDrawer-paper": {
                 boxSizing: "border-box",
-                width: DRAWER_WIDTH,
+                width: DRAWER_WIDTH_OPEN,
               },
             }}
           >
-            {drawerContent}
+            {drawerContent(false)}
           </Drawer>
         ) : (
           <Drawer
@@ -148,14 +178,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             sx={{
               "& .MuiDrawer-paper": {
                 boxSizing: "border-box",
-                width: DRAWER_WIDTH,
+                width: drawerWidth,
                 borderRight: "1px solid",
                 borderColor: "divider",
+                overflowX: "hidden",
+                transition: theme.transitions.create("width", {
+                  easing: theme.transitions.easing.sharp,
+                  duration: theme.transitions.duration.enteringScreen,
+                }),
               },
             }}
             open
           >
-            {drawerContent}
+            {drawerContent(!desktopOpen)}
           </Drawer>
         )}
       </Box>
@@ -166,7 +201,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         sx={{
           flexGrow: 1,
           bgcolor: "background.default",
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          transition: "width 225ms",
           ...(isMobile && { mt: "64px" }),
         }}
       >
