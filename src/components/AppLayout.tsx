@@ -203,9 +203,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           bgcolor: "background.default",
           width: { md: `calc(100% - ${drawerWidth}px)` },
           transition: "width 225ms",
-          ...(isMobile && { mt: "64px" }),
         }}
       >
+        {isMobile && <Toolbar />}
         {children}
       </Box>
     </Box>
