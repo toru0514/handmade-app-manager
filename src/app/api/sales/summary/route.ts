@@ -92,8 +92,28 @@ function getOrderTotalPrice(row: OrderRow): number {
 }
 
 function resolveProductName(name: string, nameMap: Map<string, string>): string {
-  const stripped = stripOptionSuffix(name);
-  return nameMap.get(stripped) ?? stripped;
+  // 完全一致
+  const exact = nameMap.get(name);
+  if (exact) return exact;
+
+  // 前方一致: 最も長いキーでマッチしたものを優先
+  let bestMatch: string | null = null;
+  let bestKeyLen = -1;
+  for (const [originalName, shortName] of nameMap) {
+    if (!name.startsWith(originalName)) continue;
+    const suffix = name.slice(originalName.length);
+    if (suffix && !isOptionSuffix(suffix)) continue;
+    if (originalName.length > bestKeyLen) {
+      bestMatch = suffix ? `${shortName}${suffix}` : shortName;
+      bestKeyLen = originalName.length;
+    }
+  }
+  return bestMatch ?? name;
+}
+
+function isOptionSuffix(suffix: string): boolean {
+  const trimmed = suffix.trimStart();
+  return trimmed.startsWith("(") || trimmed.startsWith("（");
 }
 
 function getProducts(
@@ -153,7 +173,7 @@ function generateMonthRange(startDate: string, endDate: string): string[] {
 }
 
 function stripOptionSuffix(name: string): string {
-  return name.replace(/\s*[\(（].*?[\)）]\s*$/, "");
+  return name.replace(/(\s*[（(][^)）]*[)）])+\s*$/, "").trim();
 }
 
 function buildSummary(
