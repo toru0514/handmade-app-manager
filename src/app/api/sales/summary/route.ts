@@ -43,6 +43,17 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createSupabaseServerClient();
 
+    // 商品名マッピングを取得
+    const { data: nameMapRows } = await supabase
+      .from("product_name_map")
+      .select("original_product_name, product_name");
+    const productNameMap = new Map<string, string>();
+    if (nameMapRows) {
+      for (const row of nameMapRows) {
+        productNameMap.set(row.original_product_name, row.product_name);
+      }
+    }
+
     // DB側でフィルタリング
     let query = supabase
       .from("orders")
@@ -64,7 +75,7 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = (orders ?? []) as OrderRow[];
-    const summary = buildSummary(rows, startDate, endDate);
+    const summary = buildSummary(rows, startDate, endDate, productNameMap);
 
     return Response.json(summary);
   } catch (err) {
@@ -80,10 +91,17 @@ function getOrderTotalPrice(row: OrderRow): number {
   return row.product_price ?? 0;
 }
 
-function getProducts(row: OrderRow): { name: string; price: number; quantity: number; subtotal: number }[] {
+function resolveProductName(name: string, nameMap: Map<string, string>): string {
+  return nameMap.get(name) ?? name;
+}
+
+function getProducts(
+  row: OrderRow,
+  nameMap: Map<string, string>,
+): { name: string; price: number; quantity: number; subtotal: number }[] {
   if (row.products_json && row.products_json.length > 0) {
     return row.products_json.map((p) => ({
-      name: p.name,
+      name: resolveProductName(p.name, nameMap),
       price: p.price,
       quantity: p.quantity,
       subtotal: p.price * p.quantity,
@@ -92,7 +110,7 @@ function getProducts(row: OrderRow): { name: string; price: number; quantity: nu
   if (row.product_name) {
     return [
       {
-        name: row.product_name,
+        name: resolveProductName(row.product_name, nameMap),
         price: row.product_price ?? 0,
         quantity: 1,
         subtotal: row.product_price ?? 0,
@@ -137,7 +155,12 @@ function stripOptionSuffix(name: string): string {
   return name.replace(/\s*[\(（].*?[\)）]\s*$/, "");
 }
 
-function buildSummary(rows: OrderRow[], startDate: string, endDate: string): SalesSummaryDto {
+function buildSummary(
+  rows: OrderRow[],
+  startDate: string,
+  endDate: string,
+  nameMap: Map<string, string>,
+): SalesSummaryDto {
   // 基本集計
   const totalSales = rows.reduce((sum, row) => sum + getOrderTotalPrice(row), 0);
   const totalOrders = rows.length;
@@ -184,7 +207,7 @@ function buildSummary(rows: OrderRow[], startDate: string, endDate: string): Sal
   // 商品別集計
   const productMap = new Map<string, { totalSales: number; totalQuantity: number; orderCount: number }>();
   for (const row of rows) {
-    const products = getProducts(row);
+    const products = getProducts(row, nameMap);
     const countedProducts = new Set<string>();
     for (const product of products) {
       const name = stripOptionSuffix(product.name);
@@ -211,7 +234,7 @@ function buildSummary(rows: OrderRow[], startDate: string, endDate: string): Sal
   // 注文一覧
   const orders: SalesOrderDto[] = rows.map((row) => {
     const totalPrice = getOrderTotalPrice(row);
-    const products = getProducts(row);
+    const products = getProducts(row, nameMap);
     return {
       orderId: row.order_id,
       platform: row.platform,
