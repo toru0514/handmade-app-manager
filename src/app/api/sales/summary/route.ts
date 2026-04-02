@@ -92,7 +92,8 @@ function getOrderTotalPrice(row: OrderRow): number {
 }
 
 function resolveProductName(name: string, nameMap: Map<string, string>): string {
-  return nameMap.get(name) ?? name;
+  const stripped = stripOptionSuffix(name);
+  return nameMap.get(stripped) ?? stripped;
 }
 
 function getProducts(
