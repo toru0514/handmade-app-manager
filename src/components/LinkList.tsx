@@ -6,8 +6,6 @@ import {
   Typography,
   Fab,
   Container,
-  AppBar,
-  Toolbar,
   CircularProgress,
   Alert,
   Snackbar,
@@ -18,20 +16,13 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
-import {
-  Add as AddIcon,
-  Dashboard as DashboardIcon,
-  BarChart as BarChartIcon,
-  Logout as LogoutIcon,
-} from "@mui/icons-material";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Add as AddIcon } from "@mui/icons-material";
 import { useLinks } from "@/hooks/useLinks";
 import LinkCard from "./LinkCard";
 import AddLinkDialog from "./AddLinkDialog";
+import AppLayout from "./AppLayout";
 
 export default function LinkList() {
-  const router = useRouter();
   const { links, isLoaded, error, addLink, updateLink, deleteLink } = useLinks();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -70,34 +61,7 @@ export default function LinkList() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
-      <AppBar position="static" elevation={0}>
-        <Toolbar>
-          <DashboardIcon sx={{ mr: 1.5 }} />
-          <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
-            App Manager
-          </Typography>
-          <Button
-            color="inherit"
-            component={Link}
-            href="/sales"
-            startIcon={<BarChartIcon />}
-          >
-            売上集計
-          </Button>
-          <Button
-            color="inherit"
-            startIcon={<LogoutIcon />}
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              router.push("/login");
-            }}
-          >
-            ログアウト
-          </Button>
-        </Toolbar>
-      </AppBar>
-
+    <AppLayout>
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Typography
           variant="body1"
@@ -170,6 +134,6 @@ export default function LinkList() {
         message={snackbar}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
-    </Box>
+    </AppLayout>
   );
 }
